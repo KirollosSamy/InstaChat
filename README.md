@@ -33,9 +33,7 @@ That's why I tried to design the system with scalabilty in mind: "What happens i
 - With millions of requests per second, it would be almost impossible for the servers using the traditional request-response architcture to handle the flood of requests even with horizontal scalabilty (multiple servers, multiple processes, ...).
 The idea is that the servers need to process the requests and serve resources, the time taken to process a request will likely increase as the size of the database increases.
 This introduces latency that is exepcted to go higher in the future (even though we are not doing any actual processing now).
-
-- This latency will be the main bottleneck in the applicaitons and customers are likely to be discouraged.
-I believe this was the same problem that led to building post-request-relays service at Instabug.
+This latency will be the main bottleneck in the applicaitons and customers are likely to be discouraged.
 
 - Here comes the main advantage of using message queues. Instead of processing the request on the fly, the servers just push the request as a job, this takes almost O(1) time, and it is likely to stay so.
 This is the main purpose of `Chat Dispatchers`, they receive the requests, push them in the queue, and almost immediately gives them a response.
@@ -53,7 +51,7 @@ They also index the messages in `Elastic Search` after they are created to enabl
 - My first choice of the message queue was `Sidekiq`, it's natively supported in rails, fast because it's backed up by redis and dealing with it in go is relatively easy.
 
 - However it has serious drawback, as the size of the data/customers increases, it requires large memory to deal with that increase which can lead to serious ramificaions. For example AppSignal in this [Article](https://blog.appsignal.com/2019/04/23/kafka-sidekiq-ruby.html) explains how the huge increase in memory demand not only prevnted them from receiving more requests but it prevented the dequeue of jobs in the queue leading to some kind of deadlock.
-They also share their experience in migrating from Sidekiq to Kafka incrementally. Which I believe Instabug did the same.
+They also share their experience in migrating from Sidekiq to Kafka incrementally.
 
 - On the other hand, `Kafka` offers high throughput, fault tolerance, scalability, durability, and low latency which makes it the best candidate in production environment.
 
