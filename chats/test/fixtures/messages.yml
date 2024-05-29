@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  message_num: 1
+  messaged_at: 2024-05-20 22:03:56
+  chat: one
+  user: one
+  content: MyString
+
+two:
+  message_num: 1
+  messaged_at: 2024-05-20 22:03:56
+  chat: two
+  user: two
+  content: MyString

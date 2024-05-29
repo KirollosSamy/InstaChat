@@ -1,0 +1,12 @@
+default: &default
+  host: <%= ENV.fetch('ELASTIC_SEARCH_HOST') { 'localhost:9200' } %>
+  number_of_shards: 1
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default

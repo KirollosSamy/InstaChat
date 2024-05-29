@@ -1,0 +1,14 @@
+default: &default
+  host: <%= ENV.fetch('KAFKA_HOST') { 'localhost:9092' } %>
+  client_id: 'insta_chat'
+  create_chat_topic: 'chats'
+  create_msg_topic: 'messages'
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default

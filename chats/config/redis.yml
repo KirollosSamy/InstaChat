@@ -1,0 +1,14 @@
+default: &default
+  host: <%= ENV.fetch('REDIS_HOST') { 'redis' } %>
+  port: <%= ENV.fetch('REDIS_PORT') { 6379 } %>
+  db: <%= ENV.fetch('REDIS_DB') { 0 } %>
+  namespace: 'insta_chat'
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default

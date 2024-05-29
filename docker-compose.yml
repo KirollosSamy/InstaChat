@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - chats
+      - chat_dispatchers
+
+  chats: &base
+    build:
+      context: ./chats
+      dockerfile: Dockerfile
+    container_name: chats
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./chats:/app
+    environment:
+      - RAILS_ENV=development
+      - DB_HOST=mysql
+      - DB_NAME=insta_chat
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - ELASTIC_SEARCH_HOST=elasticsearch:9200
+    depends_on:
+      - mysql
+      - redis
+      - elasticsearch
+
+  chat_workers:
+    <<: *base
+    container_name: chat_workers
+    entrypoint: ["bundle", "exec", "karafka", "server"]
+    environment:
+      - RAILS_ENV=development
+      - DB_HOST=mysql
+      - DB_NAME=insta_chat
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - KAFKA_HOST=kafka:9092
+      - ELASTIC_SEARCH_HOST=elasticsearch:9200
+    depends_on:
+      - mysql
+      - kafka
+      - elasticsearch
+    ports: []
+
+  chat_dispatchers:
+    build:
+      context: ./chat_dispatchers
+      dockerfile: Dockerfile
+    container_name: chat_dispatchers
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - KAFKA_BROKER=kafka:9092
+    depends_on:
+      - redis
+      - kafka
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "xpack.security.enabled=false"
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    ports:
+        - '9092:9092'
+    environment:
+        - KAFKA_BROKER_ID=1
+        - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092
+        - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+        - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+        - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+        - zookeeper
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: insta_chat
+    ports:
+      - "3306:3306"
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  zookeeper:
+      image: wurstmeister/zookeeper
+      container_name: zookeeper
+      ports:
+          - '2181:2181'
